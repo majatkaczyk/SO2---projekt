@@ -1,1 +1,1 @@
-# SO2---projekt
+# SO2-projekt
