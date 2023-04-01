@@ -1,12 +1,23 @@
 import pygame
+import random
 
 pygame.init()
 window = pygame.display.set_mode((1050, 750))
 
-duckImg = pygame.image.load('kaczuszka.png')
+duckImg = pygame.image.load('assets/kaczuszka.png')
+appleImg = pygame.image.load('assets/apple.png')
+
+food_pos_x = [300, 450, 600]
+food_pos_y = [150, 300, 450]
 
 def duck():
     window.blit(duckImg, (150, 300))
+
+def apple():
+    apple_x = random.choice(food_pos_x)
+    apple_y = random.choice(food_pos_y)
+    pygame.time.delay(140)
+    window.blit(appleImg, (apple_x, apple_y))
 
 # create first tile:
 frame = pygame.rect.Rect(298, 148, 454, 454)
@@ -43,4 +54,7 @@ while run:
     pygame.draw.rect(window, (0,0,120), tile7)
     pygame.draw.rect(window, (0,0,190), tile8)
     pygame.draw.rect(window, (0,0,255), tile9)
+    
+    apple()
+    
     pygame.display.update()
