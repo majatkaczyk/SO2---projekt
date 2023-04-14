@@ -4,7 +4,9 @@ import threading
 import time
 
 pygame.init()
+pygame.font.init()
 window = pygame.display.set_mode((1050, 750))
+font = pygame.font.Font(None, 36)
 
 duckImg = pygame.image.load("assets/kaczuszka.png")
 hedgehogImg = pygame.image.load("assets/hedgehog.png")
@@ -15,6 +17,8 @@ eatenAppleImg = pygame.image.load("assets/eaten_apple.png")
 
 food_pos_x = [300, 450, 600]
 food_pos_y = [150, 300, 450]
+
+score = 0
 
 
 class Apple:
@@ -63,6 +67,8 @@ class Game:
             window.fill((130, 30, 30))
             pygame.draw.rect(window, (255, 255, 255), self.frame)
             pygame.draw.rect(window, (130, 30, 30), self.background_tile)
+            score_text = font.render(f"Score: {score}", True, (255, 255, 255))
+            window.blit(score_text, (10, 10))
 
             # print duck:
             window.blit(duckImg, (150, 300))
@@ -82,6 +88,8 @@ class Game:
             pygame.display.update()
 
     def duckEats(self):
+        global score
+        score += 1
         pygame.display.update()
         apple.apple_x = 300
         apple.apple_y = 300
