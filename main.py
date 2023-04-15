@@ -55,6 +55,7 @@ class Game:
         self.apple = apple
 
     def start(self):
+        global score
         run = True
 
         while run:
@@ -84,7 +85,13 @@ class Game:
                 apple.apple_x == 300 and apple.apple_y == 300
             ):
                 self.duckEats()
-
+            if pygame.key.get_pressed()[pygame.K_SPACE] and (
+                poison.poison_x == 300 and poison.poison_y == 300
+            ):
+                score = 0
+                self.draw_game_over_screen()
+                run = False
+                pygame.time.wait(2000)
             pygame.display.update()
 
     def duckEats(self):
@@ -100,6 +107,18 @@ class Game:
         # time.sleep(2)
         window.blit(haps_yellow, (150, 150))
         pygame.time.wait(650)
+
+    def draw_game_over_screen(self):
+        pygame.display.update()
+        pygame.time.wait(650)
+        window.fill((130, 30, 30))
+        font = pygame.font.SysFont(None, 40)
+        title = font.render("Game Over, you ate poison :(", True, (255, 255, 255))
+        pygame.draw.rect(window, (130, 30, 30), self.background_tile)
+        window.blit(
+            title, (1050 / 2 - title.get_width() / 2, 750 / 2 - title.get_height() / 3)
+        )
+        pygame.display.update()
 
 
 if __name__ == "__main__":
