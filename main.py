@@ -3,48 +3,24 @@ import random
 import threading
 import time
 
+from Apple import Apple
+from Poison import Poison
+
 pygame.init()
 pygame.font.init()
 window = pygame.display.set_mode((1050, 750))
 font = pygame.font.Font(None, 36)
 
-duckImg = pygame.image.load("assets/kaczuszka.png")
-hedgehogImg = pygame.image.load("assets/hedgehog.png")
-appleImg = pygame.image.load("assets/apple.png")
+duck_img = pygame.image.load("assets/duck.png")
+hedgehog_img = pygame.image.load("assets/hedgehog.png")
+apple_img = pygame.image.load("assets/apple.png")
 haps_yellow = pygame.image.load("assets/haps_yellow.png")
-poisonImg = pygame.image.load("assets/poison.png")
-eatenAppleImg = pygame.image.load("assets/eaten_apple.png")
+eaten_apple_img = pygame.image.load("assets/eaten_apple.png")
 
 food_pos_x = [300, 450, 600]
 food_pos_y = [150, 300, 450]
 
 score = 0
-
-
-class Apple:
-    def __init__(self, apple_x, apple_y):
-        self.apple_x = apple_x
-        self.apple_y = apple_y
-
-    def apple(self):
-        self.apple_x = random.choice(food_pos_x)
-        self.apple_y = random.choice(food_pos_y)
-        time.sleep(0.10)
-        window.blit(appleImg, (self.apple_x, self.apple_y))
-
-
-class Poison:
-    def __init__(self, poison_x, poison_y):
-        self.poison_x = random.choice(food_pos_x)
-        self.poison_y = random.choice(food_pos_y)
-
-    def poison(self):
-        self.poison_x = random.choice(food_pos_x)
-        self.poison_y = random.choice(food_pos_y)
-        # pygame.time.delay(140)
-        # time.sleep(0.15)
-        time.sleep(0.15)
-        window.blit(poisonImg, (self.poison_x, self.poison_y))
 
 
 class Game:
@@ -72,21 +48,21 @@ class Game:
             window.blit(score_text, (10, 10))
 
             # print duck:
-            window.blit(duckImg, (150, 300))
-            window.blit(hedgehogImg, (750, 300))
-            appleThread = threading.Thread(target=self.apple.apple)
-            poisonThread = threading.Thread(target=self.poison.poison)
-            appleThread.start()
-            poisonThread.start()
-            appleThread.join()
-            poisonThread.join()
+            window.blit(duck_img, (150, 300))
+            window.blit(hedgehog_img, (750, 300))
+            apple_thread = threading.Thread(target=self.apple.apple)
+            poison_thread = threading.Thread(target=self.poison.poison)
+            apple_thread.start()
+            poison_thread.start()
+            apple_thread.join()
+            poison_thread.join()
 
             if pygame.key.get_pressed()[pygame.K_SPACE] and (
-                apple.apple_x == 300 and apple.apple_y == 300
+                self.apple.apple_x == 300 and self.apple.apple_y == 300
             ):
-                self.duckEats()
+                self.duck_eats()
             if pygame.key.get_pressed()[pygame.K_SPACE] and (
-                poison.poison_x == 300 and poison.poison_y == 300
+                self.poison.poison_x == 300 and self.poison.poison_y == 300
             ):
                 score = 0
                 self.draw_game_over_screen()
@@ -94,16 +70,16 @@ class Game:
                 pygame.time.wait(2000)
             pygame.display.update()
 
-    def duckEats(self):
+    def duck_eats(self):
         global score
         score += 1
         pygame.display.update()
-        apple.apple_x = 300
-        apple.apple_y = 300
-        window.blit(appleImg, (300, 300))
+        Apple.apple_x = 300
+        Apple.apple_y = 300
+        window.blit(apple_img, (300, 300))
         shape = pygame.rect.Rect(300, 300, 150, 150)
         pygame.draw.rect(window, (130, 30, 30), shape)
-        window.blit(eatenAppleImg, (300, 300))
+        window.blit(eaten_apple_img, (300, 300))
         # time.sleep(2)
         window.blit(haps_yellow, (150, 150))
         pygame.time.wait(650)
@@ -122,11 +98,7 @@ class Game:
 
 
 if __name__ == "__main__":
-    apple_x = random.choice(food_pos_x)
-    apple_y = random.choice(food_pos_y)
-    poison_x = random.choice(food_pos_x)
-    poison_y = random.choice(food_pos_y)
-    apple = Apple(apple_x, apple_y)
-    poison = Poison(poison_x, poison_y)
-    game = Game(poison, apple)
+    apple_obj = Apple(food_pos_x, food_pos_y, window)
+    poison_obj = Poison(food_pos_x, food_pos_y, window)
+    game = Game(poison_obj, apple_obj)
     game.start()
