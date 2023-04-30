@@ -20,3 +20,7 @@ class Poison:
         # time.sleep(0.15)
         time.sleep(0.30)
         self.window.blit(poison_img, (self.poison_x, self.poison_y))
+
+    def change_position(self):
+        self.poison_x = random.choice(self.food_pos_x)
+        self.poison_y = random.choice(self.food_pos_y)

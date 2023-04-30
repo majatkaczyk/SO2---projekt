@@ -11,7 +11,9 @@ hedgehog_img = pygame.image.load("assets/hedgehog.png")
 apple_img = pygame.image.load("assets/apple.png")
 haps_yellow = pygame.image.load("assets/haps_yellow.png")
 eaten_apple_img = pygame.image.load("assets/eaten_apple.png")
-score = 0
+duck_score = 0
+hedgehog_score = 0
+lock = threading.Lock()
 
 
 class Game:
@@ -24,7 +26,8 @@ class Game:
         self.font = font
 
     def start(self):
-        global score
+        global duck_score
+        global hedgehog_score
         run = True
 
         while run:
@@ -33,16 +36,8 @@ class Game:
                 if event.type == pygame.QUIT:
                     run = False
 
-            # add background color:
-            self.window.fill((130, 30, 30))
-            pygame.draw.rect(self.window, (255, 255, 255), self.frame)
-            pygame.draw.rect(self.window, (130, 30, 30), self.background_tile)
-            score_text = self.font.render(f"Score: {score}", True, (255, 255, 255))
-            self.window.blit(score_text, (10, 10))
+            self.draw_game()
 
-            # print duck:
-            self.window.blit(duck_img, (150, 300))
-            self.window.blit(hedgehog_img, (750, 300))
             apple_thread = threading.Thread(target=self.apple.apple)
             poison_thread = threading.Thread(target=self.poison.poison)
             apple_thread.start()
@@ -50,31 +45,48 @@ class Game:
             apple_thread.join()
             poison_thread.join()
 
-            if pygame.key.get_pressed()[pygame.K_SPACE] and (
-                self.apple.apple_x == 300 and self.apple.apple_y == 300
-            ):
-                self.duck_eats()
-            if pygame.key.get_pressed()[pygame.K_SPACE] and (
-                self.poison.poison_x == 300 and self.poison.poison_y == 300
-            ):
-                score = 0
+            self.duck_catches_apple()
+            if duck_score < 0:
                 self.draw_game_over_screen()
                 run = False
                 pygame.time.wait(2000)
+
+            self.hedgehog_catches_apple()
+            if hedgehog_score < 0:
+                self.draw_game_over_screen()
+                run = False
+                pygame.time.wait(2000)
+
             pygame.display.update()
 
     def duck_eats(self):
-        global score
-        score += 1
+        global duck_score
+        duck_score += 1
+
         pygame.display.update()
-        self.apple.apple_x = 300
-        self.apple.apple_y = 300
-        self.window.blit(apple_img, (300, 300))
+
+        # hide whole apple
         shape = pygame.rect.Rect(300, 300, 150, 150)
         pygame.draw.rect(self.window, (130, 30, 30), shape)
+
+        # show eaten apple
         self.window.blit(eaten_apple_img, (300, 300))
-        # time.sleep(2)
+
         self.window.blit(haps_yellow, (150, 150))
+        pygame.time.wait(650)
+
+    def hedgehog_eats(self):
+        global hedgehog_score
+        hedgehog_score += 1
+
+        pygame.display.update()
+
+        shape = pygame.rect.Rect(600, 300, 150, 150)
+        pygame.draw.rect(self.window, (130, 30, 30), shape)
+
+        self.window.blit(eaten_apple_img, (600, 300))
+
+        self.window.blit(haps_yellow, (450, 150))
         pygame.time.wait(650)
 
     def draw_game_over_screen(self):
@@ -88,3 +100,44 @@ class Game:
             title, (1050 / 2 - title.get_width() / 2, 750 / 2 - title.get_height() / 3)
         )
         pygame.display.update()
+
+    def draw_game(self):
+        # add background color:
+        self.window.fill((130, 30, 30))
+        pygame.draw.rect(self.window, (255, 255, 255), self.frame)
+        pygame.draw.rect(self.window, (130, 30, 30), self.background_tile)
+        # print score
+        duck_score_text = self.font.render(
+            f"Duck score: {duck_score}", True, (255, 255, 255)
+        )
+        self.window.blit(duck_score_text, (10, 10))
+
+        hedgehog_score_text = self.font.render(
+            f"Hedgehog score: {hedgehog_score}", True, (255, 255, 255)
+        )
+        self.window.blit(hedgehog_score_text, (810, 10))
+        # print animals:
+        self.window.blit(duck_img, (150, 300))
+        self.window.blit(hedgehog_img, (750, 300))
+
+    def duck_catches_apple(self):
+        global duck_score
+        if pygame.key.get_pressed()[pygame.K_a] and (
+            self.apple.apple_x == 300 and self.apple.apple_y == 300
+        ):
+            self.duck_eats()
+        if pygame.key.get_pressed()[pygame.K_a] and (
+            self.poison.poison_x == 300 and self.poison.poison_y == 300
+        ):
+            duck_score -= 5
+
+    def hedgehog_catches_apple(self):
+        global hedgehog_score
+        if pygame.key.get_pressed()[pygame.K_UP] and (
+            self.apple.apple_x == 600 and self.apple.apple_y == 300
+        ):
+            self.hedgehog_eats()
+        if pygame.key.get_pressed()[pygame.K_UP] and (
+            self.poison.poison_x == 600 and self.poison.poison_y == 300
+        ):
+            hedgehog_score -= 5
