@@ -25,6 +25,9 @@ class Game:
         self.window = window
         self.font = font
 
+        self.semaphore = threading.Semaphore()
+        self.lock = threading.Lock()
+
     def start(self):
         global duck_score
         global hedgehog_score
@@ -45,13 +48,13 @@ class Game:
             apple_thread.join()
             poison_thread.join()
 
-            self.duck_catches_apple()
+            self.duck_logic()
             if duck_score < 0:
                 self.draw_game_over_screen()
                 run = False
                 pygame.time.wait(2000)
 
-            self.hedgehog_catches_apple()
+            self.hedgehog_logic()
             if hedgehog_score < 0:
                 self.draw_game_over_screen()
                 run = False
@@ -60,6 +63,9 @@ class Game:
             pygame.display.update()
 
     def duck_eats(self):
+        self.semaphore.acquire()
+        self.lock.acquire()
+
         global duck_score
         duck_score += 1
 
@@ -75,7 +81,40 @@ class Game:
         self.window.blit(haps_yellow, (150, 150))
         pygame.time.wait(650)
 
+        self.lock.release()
+        self.semaphore.release()
+
+    def duck_poison(self):
+        self.semaphore.acquire()
+        self.lock.acquire()
+
+        global duck_score
+        duck_score -= 5
+
+        # tutaj mozesz zrobic animacje itd na trucizne
+        pygame.time.wait(650)
+
+        self.lock.release()
+        self.semaphore.release()
+
+    def hedgehog_poison(self):
+        self.semaphore.acquire()
+        self.lock.acquire()
+
+        global hedgehog_score
+        hedgehog_score -= 5
+
+        # tutaj mozesz zrobic animacje itd na trucizne
+        pygame.time.wait(650)
+
+        self.lock.release()
+        self.semaphore.release()
+
+
     def hedgehog_eats(self):
+        self.semaphore.acquire()
+        self.lock.acquire()
+
         global hedgehog_score
         hedgehog_score += 1
 
@@ -88,6 +127,9 @@ class Game:
 
         self.window.blit(haps_yellow, (450, 150))
         pygame.time.wait(650)
+
+        self.lock.release()
+        self.semaphore.release()
 
     def draw_game_over_screen(self):
         pygame.display.update()
@@ -120,24 +162,40 @@ class Game:
         self.window.blit(duck_img, (150, 300))
         self.window.blit(hedgehog_img, (750, 300))
 
-    def duck_catches_apple(self):
-        global duck_score
+    def duck_logic(self):
         if pygame.key.get_pressed()[pygame.K_a] and (
+            self.apple.apple_x == 300 and self.apple.apple_y == 300
+        ) and (
+            self.poison.poison_x == 300 and self.poison.poison_y == 300
+        ):
+            # nothing happens
+            pygame.time.wait(650)
+            
+        elif pygame.key.get_pressed()[pygame.K_a] and (
             self.apple.apple_x == 300 and self.apple.apple_y == 300
         ):
             self.duck_eats()
-        if pygame.key.get_pressed()[pygame.K_a] and (
+
+        elif pygame.key.get_pressed()[pygame.K_a] and (
             self.poison.poison_x == 300 and self.poison.poison_y == 300
         ):
-            duck_score -= 5
+            self.duck_poison()
 
-    def hedgehog_catches_apple(self):
-        global hedgehog_score
+
+    def hedgehog_logic(self):
         if pygame.key.get_pressed()[pygame.K_UP] and (
+            self.apple.apple_x == 600 and self.apple.apple_y == 300
+        ) and (
+            self.poison.poison_x == 600 and self.poison.poison_y == 300
+        ):
+            # nothing happens
+            pygame.time.wait(650)        
+
+        elif pygame.key.get_pressed()[pygame.K_UP] and (
             self.apple.apple_x == 600 and self.apple.apple_y == 300
         ):
             self.hedgehog_eats()
-        if pygame.key.get_pressed()[pygame.K_UP] and (
+        elif pygame.key.get_pressed()[pygame.K_UP] and (
             self.poison.poison_x == 600 and self.poison.poison_y == 300
         ):
-            hedgehog_score -= 5
+            self.hedgehog_poison()

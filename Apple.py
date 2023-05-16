@@ -1,6 +1,7 @@
 import pygame
 import random
 import time
+import threading
 
 apple_img = pygame.image.load("assets/apple.png")
 
@@ -13,7 +14,7 @@ class Apple:
         self.food_pos_y = food_pos_y
         self.window = window
 
-    def apple(self):
+    def apple(self):        
         self.apple_x = random.choice(self.food_pos_x)
         self.apple_y = random.choice(self.food_pos_y)
         time.sleep(0.30)
