@@ -11,9 +11,11 @@ hedgehog_img = pygame.image.load("assets/hedgehog.png")
 apple_img = pygame.image.load("assets/apple.png")
 haps_yellow = pygame.image.load("assets/haps_yellow.png")
 eaten_apple_img = pygame.image.load("assets/eaten_apple.png")
+eaten_poison_img = pygame.image.load("assets/eaten_poison.png")
+duck_game_over_img = pygame.image.load("assets/duck_win.png")
+hedgehog_game_over_img = pygame.image.load("assets/hedgehog_win.png")
 duck_score = 0
 hedgehog_score = 0
-lock = threading.Lock()
 
 
 class Game:
@@ -24,6 +26,9 @@ class Game:
         self.apple = apple
         self.window = window
         self.font = font
+        self.game_state = "start_screen"
+        self.game_height = 750
+        self.game_width = 1050
 
         self.semaphore = threading.Semaphore()
         self.lock = threading.Lock()
@@ -39,28 +44,34 @@ class Game:
                 if event.type == pygame.QUIT:
                     run = False
 
-            self.draw_game()
+            if self.game_state == "start_screen":
+                self.draw_start_screen()
+                if pygame.key.get_pressed()[pygame.K_SPACE]:
+                    self.game_state = "game_started"
 
-            apple_thread = threading.Thread(target=self.apple.apple)
-            poison_thread = threading.Thread(target=self.poison.poison)
-            apple_thread.start()
-            poison_thread.start()
-            apple_thread.join()
-            poison_thread.join()
+            if self.game_state == "game_started":
+                self.draw_game()
 
-            self.duck_logic()
-            if duck_score < 0:
-                self.draw_game_over_screen()
-                run = False
-                pygame.time.wait(2000)
+                apple_thread = threading.Thread(target=self.apple.apple)
+                poison_thread = threading.Thread(target=self.poison.poison)
+                apple_thread.start()
+                poison_thread.start()
+                apple_thread.join()
+                poison_thread.join()
 
-            self.hedgehog_logic()
-            if hedgehog_score < 0:
-                self.draw_game_over_screen()
-                run = False
-                pygame.time.wait(2000)
+                self.duck_logic()
+                if duck_score < 0:
+                    self.draw_game_over_screen("Hedgehog wins!", 2.1)
+                    run = False
+                    pygame.time.wait(2000)
 
-            pygame.display.update()
+                self.hedgehog_logic()
+                if hedgehog_score < 0:
+                    self.draw_game_over_screen("Duck wins!", 1.95)
+                    run = False
+                    pygame.time.wait(2000)
+
+                pygame.display.update()
 
     def duck_eats(self):
         self.semaphore.acquire()
@@ -91,7 +102,16 @@ class Game:
         global duck_score
         duck_score -= 5
 
-        # tutaj mozesz zrobic animacje itd na trucizne
+        pygame.display.update()
+
+        # hide whole poison
+        shape = pygame.rect.Rect(300, 300, 150, 150)
+        pygame.draw.rect(self.window, (130, 30, 30), shape)
+
+        # show eaten poison
+        self.window.blit(eaten_poison_img, (300, 300))
+
+        self.window.blit(haps_yellow, (150, 150))
         pygame.time.wait(650)
 
         self.lock.release()
@@ -104,12 +124,19 @@ class Game:
         global hedgehog_score
         hedgehog_score -= 5
 
-        # tutaj mozesz zrobic animacje itd na trucizne
+        pygame.display.update()
+
+        shape = pygame.rect.Rect(600, 300, 150, 150)
+        pygame.draw.rect(self.window, (130, 30, 30), shape)
+
+        self.window.blit(eaten_poison_img, (600, 300))
+
+        self.window.blit(haps_yellow, (750, 150))
+
         pygame.time.wait(650)
 
         self.lock.release()
         self.semaphore.release()
-
 
     def hedgehog_eats(self):
         self.semaphore.acquire()
@@ -125,22 +152,47 @@ class Game:
 
         self.window.blit(eaten_apple_img, (600, 300))
 
-        self.window.blit(haps_yellow, (450, 150))
+        self.window.blit(haps_yellow, (750, 150))
         pygame.time.wait(650)
 
         self.lock.release()
         self.semaphore.release()
 
-    def draw_game_over_screen(self):
+    def draw_game_over_screen(self, text, part_width):
         pygame.display.update()
-        pygame.time.wait(650)
+        pygame.time.wait(850)
         self.window.fill((130, 30, 30))
         font = pygame.font.SysFont(None, 40)
-        title = font.render("Game Over, you ate poison :(", True, (255, 255, 255))
+        title = font.render("GAME OVER", True, (255, 255, 255))
+        subtitle = font.render(text, True, (255, 255, 255))
         pygame.draw.rect(self.window, (130, 30, 30), self.background_tile)
         self.window.blit(
-            title, (1050 / 2 - title.get_width() / 2, 750 / 2 - title.get_height() / 3)
+            title,
+            (
+                self.game_width / 2 - title.get_width() / 2,
+                self.game_height / 5 - title.get_height() / 3,
+            ),
         )
+        self.window.blit(
+            subtitle,
+            (
+                self.game_width / part_width - title.get_width() / 2,
+                self.game_height / 4 - title.get_height() / 3,
+            ),
+        )
+        self.window.blit(duck_game_over_img, (300, 300))
+        self.window.blit(hedgehog_game_over_img, (600, 300))
+
+        duck_score_text = self.font.render(
+            f"Duck score: {duck_score}", True, (255, 255, 255)
+        )
+        self.window.blit(duck_score_text, (300, 460))
+
+        hedgehog_score_text = self.font.render(
+            f"Hedgehog score: {hedgehog_score}", True, (255, 255, 255)
+        )
+        self.window.blit(hedgehog_score_text, (600, 460))
+
         pygame.display.update()
 
     def draw_game(self):
@@ -163,14 +215,14 @@ class Game:
         self.window.blit(hedgehog_img, (750, 300))
 
     def duck_logic(self):
-        if pygame.key.get_pressed()[pygame.K_a] and (
-            self.apple.apple_x == 300 and self.apple.apple_y == 300
-        ) and (
-            self.poison.poison_x == 300 and self.poison.poison_y == 300
+        if (
+            pygame.key.get_pressed()[pygame.K_a]
+            and (self.apple.apple_x == 300 and self.apple.apple_y == 300)
+            and (self.poison.poison_x == 300 and self.poison.poison_y == 300)
         ):
             # nothing happens
             pygame.time.wait(650)
-            
+
         elif pygame.key.get_pressed()[pygame.K_a] and (
             self.apple.apple_x == 300 and self.apple.apple_y == 300
         ):
@@ -181,15 +233,14 @@ class Game:
         ):
             self.duck_poison()
 
-
     def hedgehog_logic(self):
-        if pygame.key.get_pressed()[pygame.K_UP] and (
-            self.apple.apple_x == 600 and self.apple.apple_y == 300
-        ) and (
-            self.poison.poison_x == 600 and self.poison.poison_y == 300
+        if (
+            pygame.key.get_pressed()[pygame.K_UP]
+            and (self.apple.apple_x == 600 and self.apple.apple_y == 300)
+            and (self.poison.poison_x == 600 and self.poison.poison_y == 300)
         ):
             # nothing happens
-            pygame.time.wait(650)        
+            pygame.time.wait(650)
 
         elif pygame.key.get_pressed()[pygame.K_UP] and (
             self.apple.apple_x == 600 and self.apple.apple_y == 300
@@ -199,3 +250,35 @@ class Game:
             self.poison.poison_x == 600 and self.poison.poison_y == 300
         ):
             self.hedgehog_poison()
+
+    def draw_start_screen(self):
+        self.window.fill((130, 30, 30))
+        font = pygame.font.SysFont(None, 40)
+        title = font.render("Hungry Hippos,", True, (255, 255, 255))
+        subtitle = font.render(
+            "but hippos are duck and hedgehog", True, (255, 255, 255)
+        )
+        start_button = font.render("Press space to start", True, (255, 255, 255))
+        pygame.draw.rect(self.window, (130, 30, 30), self.background_tile)
+        self.window.blit(
+            title,
+            (
+                self.game_width / 2 - title.get_width() / 2,
+                self.game_height / 5 - title.get_height() / 3,
+            ),
+        )
+        self.window.blit(
+            subtitle,
+            (
+                self.game_width / 2.75 - title.get_width() / 2,
+                self.game_height / 4 - title.get_height() / 3,
+            ),
+        )
+        self.window.blit(
+            start_button,
+            (
+                self.game_width / 2 - start_button.get_width() / 2,
+                self.game_height / 2 + start_button.get_height() / 2,
+            ),
+        )
+        pygame.display.update()
