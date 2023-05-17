@@ -73,90 +73,44 @@ class Game:
 
                 pygame.display.update()
 
-    def duck_eats(self):
+    def duck_eats(self, score, img):
         self.semaphore.acquire()
         self.lock.acquire()
 
         global duck_score
-        duck_score += 1
+        duck_score += score
 
         pygame.display.update()
 
-        # hide whole apple
-        shape = pygame.rect.Rect(300, 300, 150, 150)
-        pygame.draw.rect(self.window, (130, 30, 30), shape)
-
-        # show eaten apple
-        self.window.blit(eaten_apple_img, (300, 300))
-
+        self.draw_eaten_food(img, 300, 300)
         self.window.blit(haps_yellow, (150, 150))
         pygame.time.wait(650)
 
         self.lock.release()
         self.semaphore.release()
 
-    def duck_poison(self):
-        self.semaphore.acquire()
-        self.lock.acquire()
-
-        global duck_score
-        duck_score -= 5
-
-        pygame.display.update()
-
-        # hide whole poison
-        shape = pygame.rect.Rect(300, 300, 150, 150)
-        pygame.draw.rect(self.window, (130, 30, 30), shape)
-
-        # show eaten poison
-        self.window.blit(eaten_poison_img, (300, 300))
-
-        self.window.blit(haps_yellow, (150, 150))
-        pygame.time.wait(650)
-
-        self.lock.release()
-        self.semaphore.release()
-
-    def hedgehog_poison(self):
+    def hedgehog_eats(self, score, img):
         self.semaphore.acquire()
         self.lock.acquire()
 
         global hedgehog_score
-        hedgehog_score -= 5
+        hedgehog_score += score
 
         pygame.display.update()
 
-        shape = pygame.rect.Rect(600, 300, 150, 150)
-        pygame.draw.rect(self.window, (130, 30, 30), shape)
-
-        self.window.blit(eaten_poison_img, (600, 300))
-
-        self.window.blit(haps_yellow, (750, 150))
-
-        pygame.time.wait(650)
-
-        self.lock.release()
-        self.semaphore.release()
-
-    def hedgehog_eats(self):
-        self.semaphore.acquire()
-        self.lock.acquire()
-
-        global hedgehog_score
-        hedgehog_score += 1
-
-        pygame.display.update()
-
-        shape = pygame.rect.Rect(600, 300, 150, 150)
-        pygame.draw.rect(self.window, (130, 30, 30), shape)
-
-        self.window.blit(eaten_apple_img, (600, 300))
-
+        self.draw_eaten_food(img, 600, 300)
         self.window.blit(haps_yellow, (750, 150))
         pygame.time.wait(650)
 
         self.lock.release()
         self.semaphore.release()
+
+    def draw_eaten_food(self, img, x_pos, y_pos):
+        # hide whole food
+        shape = pygame.rect.Rect(x_pos, y_pos, 150, 150)
+        pygame.draw.rect(self.window, (130, 30, 30), shape)
+        # show eaten food
+        self.window.blit(img, (x_pos, y_pos))
 
     def draw_game_over_screen(self, text, part_width):
         pygame.display.update()
@@ -183,17 +137,14 @@ class Game:
         self.window.blit(duck_game_over_img, (300, 300))
         self.window.blit(hedgehog_game_over_img, (600, 300))
 
-        duck_score_text = self.font.render(
-            f"Duck score: {duck_score}", True, (255, 255, 255)
-        )
-        self.window.blit(duck_score_text, (300, 460))
-
-        hedgehog_score_text = self.font.render(
-            f"Hedgehog score: {hedgehog_score}", True, (255, 255, 255)
-        )
-        self.window.blit(hedgehog_score_text, (600, 460))
+        self.show_score("Duck score", 300, 460, duck_score)
+        self.show_score("Hedgehog score", 600, 460, hedgehog_score)
 
         pygame.display.update()
+
+    def show_score(self, text, x_pos, y_pos, score):
+        score_text = self.font.render(f"{text}: {score}", True, (255, 255, 255))
+        self.window.blit(score_text, (x_pos, y_pos))
 
     def draw_game(self):
         # add background color:
@@ -201,15 +152,9 @@ class Game:
         pygame.draw.rect(self.window, (255, 255, 255), self.frame)
         pygame.draw.rect(self.window, (130, 30, 30), self.background_tile)
         # print score
-        duck_score_text = self.font.render(
-            f"Duck score: {duck_score}", True, (255, 255, 255)
-        )
-        self.window.blit(duck_score_text, (10, 10))
+        self.show_score("Duck score", 10, 10, duck_score)
+        self.show_score("Hedgehog score", 810, 10, hedgehog_score)
 
-        hedgehog_score_text = self.font.render(
-            f"Hedgehog score: {hedgehog_score}", True, (255, 255, 255)
-        )
-        self.window.blit(hedgehog_score_text, (810, 10))
         # print animals:
         self.window.blit(duck_img, (150, 300))
         self.window.blit(hedgehog_img, (750, 300))
@@ -226,12 +171,12 @@ class Game:
         elif pygame.key.get_pressed()[pygame.K_a] and (
             self.apple.apple_x == 300 and self.apple.apple_y == 300
         ):
-            self.duck_eats()
+            self.duck_eats(1, eaten_apple_img)
 
         elif pygame.key.get_pressed()[pygame.K_a] and (
             self.poison.poison_x == 300 and self.poison.poison_y == 300
         ):
-            self.duck_poison()
+            self.duck_eats(-5, eaten_poison_img)
 
     def hedgehog_logic(self):
         if (
@@ -245,11 +190,12 @@ class Game:
         elif pygame.key.get_pressed()[pygame.K_UP] and (
             self.apple.apple_x == 600 and self.apple.apple_y == 300
         ):
-            self.hedgehog_eats()
+            self.hedgehog_eats(1, eaten_apple_img)
+
         elif pygame.key.get_pressed()[pygame.K_UP] and (
             self.poison.poison_x == 600 and self.poison.poison_y == 300
         ):
-            self.hedgehog_poison()
+            self.hedgehog_eats(-5, eaten_poison_img)
 
     def draw_start_screen(self):
         self.window.fill((130, 30, 30))
