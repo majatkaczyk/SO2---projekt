@@ -5,6 +5,8 @@ import time
 
 from Apple import Apple
 from Poison import Poison
+from Duck_team import Duck_team
+from Hedgehog_team import Hedgehog_team
 
 # load pet images
 duck_img = pygame.image.load("assets/duck.png")
@@ -21,10 +23,6 @@ eaten_poison_img = pygame.image.load("assets/eaten_poison.png")
 # load pets images for start and game over screen
 duck_screen_img = pygame.image.load("assets/duck_win.png")
 hedgehog_screen_img = pygame.image.load("assets/hedgehog_win.png")
-
-
-duck_and_dog_score = 0  # first team - dog and duck
-hedgehog_and_hamster_score = 0  # second team - hedgehog and hamster
 
 
 class Game:
@@ -44,6 +42,9 @@ class Game:
         self.semaphore = threading.Semaphore()
         self.lock = threading.Lock()
 
+        self.duck_team = Duck_team(self.semaphore, self.lock, self.window)
+        self.hedgehog_team = Hedgehog_team(self.semaphore, self.lock, self.window)
+
     # start game
     def start(self):
         run = True
@@ -61,14 +62,12 @@ class Game:
                     self.game_state = "game_started"
 
             # if space pressed draw game board
-
-            # create game board
-
             if self.game_state == "game_started":
                 self.frame = pygame.rect.Rect(298, 148, 454, 454)
                 self.background_tile = pygame.rect.Rect(300, 150, 450, 450)
                 self.draw_game()
 
+                # add threads
                 apple_thread = threading.Thread(target=self.apple.apple)
                 poison_thread = threading.Thread(target=self.poison.poison)
                 apple_thread.start()
@@ -76,86 +75,38 @@ class Game:
                 apple_thread.join()
                 poison_thread.join()
 
-                self.duck_logic()
-                if duck_and_dog_score < 0:
-                    self.draw_game_over_screen("Hedgehog wins!", 2.1)
+                self.duck_team.logic(self.apple, self.poison)
+                if self.duck_team.duck_and_dog_score < 0:
+                    self.draw_game_over_screen("Hedgehog team wins!", 390, 175)
                     run = False
                     pygame.time.wait(2000)
 
-                self.hedgehog_logic()
-                if hedgehog_and_hamster_score < 0:
-                    self.draw_game_over_screen("Duck wins!", 1.95)
+                self.hedgehog_team.logic(self.apple, self.poison)
+                if self.hedgehog_team.hedgehog_and_hamster_score < 0:
+                    self.draw_game_over_screen("Duck team wins!", 420, 175)
                     run = False
                     pygame.time.wait(2000)
 
                 pygame.display.update()
 
-    def duck_eats(self, score, img):
-        self.semaphore.acquire()
-        self.lock.acquire()
-
-        global duck_and_dog_score
-        duck_and_dog_score += score
-
-        pygame.display.update()
-
-        self.draw_eaten_food(img, 300, 300)
-        self.window.blit(haps_yellow, (150, 100))
-        pygame.time.wait(1200)
-
-        self.lock.release()
-        self.semaphore.release()
-
-    def hedgehog_eats(self, score, img):
-        self.semaphore.acquire()
-        self.lock.acquire()
-
-        global hedgehog_and_hamster_score
-        hedgehog_and_hamster_score += score
-
-        pygame.display.update()
-
-        self.draw_eaten_food(img, 600, 300)
-        self.window.blit(haps_yellow, (750, 100))
-        pygame.time.wait(1200)
-
-        self.lock.release()
-        self.semaphore.release()
-
-    def draw_eaten_food(self, img, x_pos, y_pos):
-        # hide whole food
-        shape = pygame.rect.Rect(x_pos, y_pos, 150, 150)
-        pygame.draw.rect(self.window, (130, 30, 30), shape)
-        # show eaten food
-        self.window.blit(img, (x_pos, y_pos))
-
-    def draw_game_over_screen(self, text, part_width):
+    def draw_game_over_screen(self, text, pos_x, pos_y):
         pygame.display.update()
         pygame.time.wait(1000)
         self.window.fill((130, 30, 30))
         font = pygame.font.SysFont(None, 40)
-        title = font.render("GAME OVER", True, (255, 255, 255))
-        subtitle = font.render(text, True, (255, 255, 255))
-        pygame.draw.rect(self.window, (130, 30, 30), self.background_tile)
-        self.window.blit(
-            title,
-            (
-                self.game_width / 2 - title.get_width() / 2,
-                self.game_height / 5 - title.get_height() / 3,
-            ),
-        )
-        self.window.blit(
-            subtitle,
-            (
-                self.game_width / part_width - title.get_width() / 2,
-                self.game_height / 4 - title.get_height() / 3,
-            ),
-        )
-        self.window.blit(duck_screen_img, (300, 300))
-        self.window.blit(hedgehog_screen_img, (600, 300))
+        self.show_text("GAME OVER", font, 450, 100)
+        self.show_text(text, font, pos_x, pos_y)
 
-        self.show_score("Duck score", 300, 460, duck_and_dog_score)
-        self.show_score("Hedgehog score", 600, 460, hedgehog_and_hamster_score)
+        self.show_text("Duck team", font, 200, 275)
+        self.window.blit(duck_screen_img, (200, 315))
+
+        self.show_text("Hedgehog team", font, 670, 275)
+        self.window.blit(hedgehog_screen_img, (700, 315))
+
+        self.show_score("Score", 210, 480, self.duck_team.duck_and_dog_score)
+        self.show_score(
+            "Score", 715, 480, self.hedgehog_team.hedgehog_and_hamster_score
+        )
 
         pygame.display.update()
 
@@ -168,53 +119,21 @@ class Game:
         self.window.fill((130, 30, 30))
         pygame.draw.rect(self.window, (255, 255, 255), self.frame)
         pygame.draw.rect(self.window, (130, 30, 30), self.background_tile)
+
         # print score
-        self.show_score("Duck score", 10, 10, duck_and_dog_score)
-        self.show_score("Hedgehog score", 810, 10, hedgehog_and_hamster_score)
+        self.show_score("Duck team score", 20, 10, self.duck_team.duck_and_dog_score)
+        self.show_score(
+            "Hedgehog team score",
+            720,
+            10,
+            self.hedgehog_team.hedgehog_and_hamster_score,
+        )
 
         # print animals:
         self.window.blit(duck_img, (150, 375))
         self.window.blit(hedgehog_img, (750, 375))
         self.window.blit(dog_img, (150, 225))
         self.window.blit(hamster_img, (750, 225))
-
-    def duck_logic(self):
-        if (
-            pygame.key.get_pressed()[pygame.K_a]
-            and (self.apple.apple_x == 300 and self.apple.apple_y == 300)
-            and (self.poison.poison_x == 300 and self.poison.poison_y == 300)
-        ):
-            # nothing happens
-            pygame.time.wait(650)
-
-        elif pygame.key.get_pressed()[pygame.K_a] and (
-            self.apple.apple_x == 300 and self.apple.apple_y == 300
-        ):
-            self.duck_eats(1, eaten_apple_img)
-
-        elif pygame.key.get_pressed()[pygame.K_a] and (
-            self.poison.poison_x == 300 and self.poison.poison_y == 300
-        ):
-            self.duck_eats(-5, eaten_poison_img)
-
-    def hedgehog_logic(self):
-        if (
-            pygame.key.get_pressed()[pygame.K_UP]
-            and (self.apple.apple_x == 600 and self.apple.apple_y == 300)
-            and (self.poison.poison_x == 600 and self.poison.poison_y == 300)
-        ):
-            # nothing happens
-            pygame.time.wait(650)
-
-        elif pygame.key.get_pressed()[pygame.K_UP] and (
-            self.apple.apple_x == 600 and self.apple.apple_y == 300
-        ):
-            self.hedgehog_eats(1, eaten_apple_img)
-
-        elif pygame.key.get_pressed()[pygame.K_UP] and (
-            self.poison.poison_x == 600 and self.poison.poison_y == 300
-        ):
-            self.hedgehog_eats(-5, eaten_poison_img)
 
     def show_text(self, text, font, x, y):
         text_on_screen = font.render(text, True, (255, 255, 255))
@@ -229,12 +148,12 @@ class Game:
         self.show_text("but hippos are duck, hedgehog, dog and hamster", font, 200, 100)
 
         # show first team
-        self.show_text("Team I", font, 235, 275)
+        self.show_text("Duck team", font, 235, 275)
         self.window.blit(duck_screen_img, (225, 325))
-        self.show_text("press D to catch food", font, 135, 485)
+        self.show_text("press D to catch food", font, 165, 485)
 
         # show second team
-        self.show_text("Team II", font, 685, 275)
+        self.show_text("Hedgehog team", font, 625, 275)
         self.window.blit(hedgehog_screen_img, (665, 325))
         self.show_text("press H to catch food", font, 600, 485)
 
