@@ -15,10 +15,10 @@ Unlike the original game, in our version pets are divided into two groups. This 
 ## Multithreading
 
 ### Threads
-cos tam o watkach
+Threads are used to perform various tasks simultaneously and in parallel. In this game,  two threads are created: "apple_thread" and "posion_thread". Each of these threads performs a function responsible for generating food locations (apple or poison) for the duck and hedgehog teams. Using threads allows these elements to be generated simultaneously and keeps the game running smoothly.
 
 ### Critical Sections
-cos o sekcjach
+A critical section is a piece of code that can only be excecuted by one thread at a time. The access to shared data must be cotrolled to avoid multiple threads accesing them simultaneously and the potential problems of competing access to these resources. In this game, the critical section includes logic related to updating team scores and it is protected with lock. Lock ensures that only one thread can perform operations on the critical section at a time. This synchronization mechanis is used to ensure the correctness of operations modifying team results, eliminating the problem of potential conflicts.
 
 # Authors
 - Maja Tkaczyk 259145 
