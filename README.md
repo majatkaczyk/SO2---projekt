@@ -19,8 +19,14 @@ cos tam o watkach
 
 ### Critical Sections
 cos o sekcjach
-# Authors
 
-- Maja Tkaczyk 259145
-- Bartosz Kloc 259175
+# Authors
+- Maja Tkaczyk 259145 
+    <a href="https://github.com/majatkaczyk">
+      <img src="./assets/badge.png" height="28px" width="28px"/>
+    </a>
+- Bartosz Kloc   259175
+    <a href="https://github.com/bartelke">
+      <img src="./assets/badge.png" height="28px" width="28px"/>
+    </a>
 
