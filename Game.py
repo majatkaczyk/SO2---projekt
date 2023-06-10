@@ -14,12 +14,6 @@ hedgehog_img = pygame.image.load("assets/hedgehog.png")
 dog_img = pygame.image.load("assets/dog.png")
 hamster_img = pygame.image.load("assets/hamster.png")
 
-# load food images
-apple_img = pygame.image.load("assets/apple.png")
-haps_yellow = pygame.image.load("assets/haps_yellow.png")
-eaten_apple_img = pygame.image.load("assets/eaten_apple.png")
-eaten_poison_img = pygame.image.load("assets/eaten_poison.png")
-
 # load pets images for start and game over screen
 duck_screen_img = pygame.image.load("assets/duck_win.png")
 hedgehog_screen_img = pygame.image.load("assets/hedgehog_win.png")
@@ -42,6 +36,7 @@ class Game:
         self.semaphore = threading.Semaphore()
         self.lock = threading.Lock()
 
+        # create teams
         self.duck_team = Duck_team(self.semaphore, self.lock, self.window)
         self.hedgehog_team = Hedgehog_team(self.semaphore, self.lock, self.window)
 
@@ -61,7 +56,7 @@ class Game:
                 if pygame.key.get_pressed()[pygame.K_SPACE]:
                     self.game_state = "game_started"
 
-            # if space pressed draw game board
+            # if space pressed hide start screen and draw game board
             if self.game_state == "game_started":
                 self.frame = pygame.rect.Rect(298, 148, 454, 454)
                 self.background_tile = pygame.rect.Rect(300, 150, 450, 450)
@@ -76,25 +71,36 @@ class Game:
                 poison_thread.join()
 
                 self.duck_team.logic(self.apple, self.poison)
+
+                # if the duck team has less than 0 points, then hedgehog team wins and show game over screen for 3 s
                 if self.duck_team.duck_and_dog_score < 0:
                     self.draw_game_over_screen("Hedgehog team wins!", 390, 175)
                     run = False
-                    pygame.time.wait(2000)
+                    pygame.time.wait(3000)
 
                 self.hedgehog_team.logic(self.apple, self.poison)
+
+                # if the hedgehog team has less than 0 points, then duck team wins and show game over screen for 3 s
                 if self.hedgehog_team.hedgehog_and_hamster_score < 0:
                     self.draw_game_over_screen("Duck team wins!", 420, 175)
                     run = False
-                    pygame.time.wait(2000)
+                    pygame.time.wait(3000)
 
                 pygame.display.update()
 
     def draw_game_over_screen(self, text, pos_x, pos_y):
+        # update game window
         pygame.display.update()
         pygame.time.wait(1000)
+
+        # fill game window window with a maroon color
         self.window.fill((130, 30, 30))
+
+        # set font size to 40
         font = pygame.font.SysFont(None, 40)
         self.show_text("GAME OVER", font, 450, 100)
+
+        # show which team won the game
         self.show_text(text, font, pos_x, pos_y)
 
         self.show_text("Duck team", font, 200, 275)
@@ -103,7 +109,10 @@ class Game:
         self.show_text("Hedgehog team", font, 670, 275)
         self.window.blit(hedgehog_screen_img, (700, 315))
 
+        # show the duck team score
         self.show_score("Score", 210, 480, self.duck_team.duck_and_dog_score)
+
+        # show the hedgehog team score
         self.show_score(
             "Score", 715, 480, self.hedgehog_team.hedgehog_and_hamster_score
         )
@@ -115,8 +124,10 @@ class Game:
         self.window.blit(score_text, (x_pos, y_pos))
 
     def draw_game(self):
-        # add background color:
+        # add background color
         self.window.fill((130, 30, 30))
+
+        # show white frame and maroon background
         pygame.draw.rect(self.window, (255, 255, 255), self.frame)
         pygame.draw.rect(self.window, (130, 30, 30), self.background_tile)
 
@@ -129,7 +140,7 @@ class Game:
             self.hedgehog_team.hedgehog_and_hamster_score,
         )
 
-        # print animals:
+        # print animals images
         self.window.blit(duck_img, (150, 375))
         self.window.blit(hedgehog_img, (750, 375))
         self.window.blit(dog_img, (150, 225))
