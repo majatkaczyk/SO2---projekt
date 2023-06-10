@@ -7,9 +7,8 @@ haps_yellow = pygame.image.load("assets/haps_yellow.png")
 
 
 class Duck_team:
-    def __init__(self, semaphore, lock, window):
+    def __init__(self, lock, window):
         self.duck_and_dog_score = 0
-        self.semaphore = semaphore
         self.lock = lock
         self.window = window
 
@@ -28,17 +27,16 @@ class Duck_team:
             apple.apple_x == 300 and apple.apple_y == 300
         ):
             # if the D key was pressed and the apple is in the right place,the duck team eats apple and get +1 point
-            self.eat(1, eaten_apple_img, self.semaphore, self.lock)
+            self.eat(1, eaten_apple_img, self.lock)
 
         elif pygame.key.get_pressed()[pygame.K_d] and (
             poison.poison_x == 300 and poison.poison_y == 300
         ):
             # if the D key was pressed and the poison is in the right place,the duck team eats poison and get -5 points
-            self.eat(-5, eaten_poison_img, self.semaphore, self.lock)
+            self.eat(-5, eaten_poison_img, self.lock)
 
-    def eat(self, score, img, semaphore, lock):
-        # new threads can only acquire a position on the semaphore once an existing thread holding the semaphore releases a position
-        semaphore.acquire()
+    def eat(self, score, img, lock):
+        # new threads can only acquire a position once an existing thread releases a position
         lock.acquire()
 
         # update score
@@ -56,7 +54,6 @@ class Duck_team:
 
         # release the position
         lock.release()
-        semaphore.release()
 
     def draw_eaten_food(self, img, x_pos, y_pos):
         # hide whole food

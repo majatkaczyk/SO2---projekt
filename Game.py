@@ -32,13 +32,12 @@ class Game:
         self.game_height = 750
         self.game_width = 1050
 
-        # add semaphore and lock
-        self.semaphore = threading.Semaphore()
+        # add lock
         self.lock = threading.Lock()
 
         # create teams
-        self.duck_team = Duck_team(self.semaphore, self.lock, self.window)
-        self.hedgehog_team = Hedgehog_team(self.semaphore, self.lock, self.window)
+        self.duck_team = Duck_team(self.lock, self.window)
+        self.hedgehog_team = Hedgehog_team(self.lock, self.window)
 
     # start game
     def start(self):
