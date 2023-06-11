@@ -1,6 +1,7 @@
-import pygame
-import random
+"""This file contains the Apple class that is responsible for handling apples logic in the game."""
 import time
+import random
+import pygame
 
 apple_img = pygame.image.load("assets/apple.png")
 
@@ -18,7 +19,8 @@ class Apple:
         self.window = window
 
     def apple(self):
-        # random apple spot
+        """Sets apple to a random spot"""
+
         self.apple_x = random.choice(self.food_pos_x)
         self.apple_y = random.choice(self.food_pos_y)
 

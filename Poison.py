@@ -1,6 +1,6 @@
-import pygame
 import random
 import time
+import pygame
 
 poison_img = pygame.image.load("assets/poison.png")
 

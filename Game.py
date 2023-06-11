@@ -1,12 +1,12 @@
-import pygame
-import random
+"""This file contains game logic"""
 import threading
-import time
+import pygame
+from pygame.locals import QUIT, K_SPACE
 
-from Apple import Apple
-from Poison import Poison
-from Duck_team import Duck_team
-from Hedgehog_team import Hedgehog_team
+from apple import Apple
+from poison import Poison
+from duck_team import DuckTeam
+from hedgehog_team import HedgehogTeam
 
 # load pet images
 duck_img = pygame.image.load("assets/duck.png")
@@ -20,46 +20,43 @@ hedgehog_screen_img = pygame.image.load("assets/hedgehog_win.png")
 
 
 class Game:
-    def __init__(self, poison: Poison, apple: Apple, window, font):
+    def __init__(self, poison: Poison, apple: Apple, window):
         # create game board
-        self.frame = pygame.rect.Rect(0, 0, 0, 0)
-        self.background_tile = pygame.rect.Rect(0, 0, 0, 0)
+
         self.poison = poison
         self.apple = apple
         self.window = window
-        self.font = font
-        self.game_state = "start_screen"
-        self.game_height = 750
-        self.game_width = 1050
 
         # add lock
         self.lock = threading.Lock()
 
         # create teams
-        self.duck_team = Duck_team(self.lock, self.window)
-        self.hedgehog_team = Hedgehog_team(self.lock, self.window)
+        self.duck_team = DuckTeam(self.lock, self.window)
+        self.hedgehog_team = HedgehogTeam(self.lock, self.window)
 
-    # start game
-    def start(self):
+    def start(self, font, frame, background_tile):
+        """Function to start the game, show screens, add threads"""
+
+        game_state = "start_screen"
         run = True
 
         while run:
             for event in pygame.event.get():
                 # close the window:
-                if event.type == pygame.QUIT:
+                if event.type == QUIT:
                     run = False
 
             # draw start screen
-            if self.game_state == "start_screen":
+            if game_state == "start_screen":
                 self.draw_start_screen()
-                if pygame.key.get_pressed()[pygame.K_SPACE]:
-                    self.game_state = "game_started"
+                if pygame.key.get_pressed()[K_SPACE]:
+                    game_state = "game_started"
 
             # if space pressed hide start screen and draw game board
-            if self.game_state == "game_started":
-                self.frame = pygame.rect.Rect(298, 148, 454, 454)
-                self.background_tile = pygame.rect.Rect(300, 150, 450, 450)
-                self.draw_game()
+            if game_state == "game_started":
+                frame = pygame.Rect(298, 148, 454, 454)
+                background_tile = pygame.Rect(300, 150, 450, 450)
+                self.draw_game(font, frame, background_tile)
 
                 # add threads
                 apple_thread = threading.Thread(target=self.apple.apple)
@@ -71,7 +68,8 @@ class Game:
 
                 self.duck_team.logic(self.apple, self.poison)
 
-                # if the duck team has less than 0 points, then hedgehog team wins and show game over screen for 3 s
+                # if the duck team has less than 0 points,
+                # then hedgehog team wins and show game over screen for 3 s
                 if self.duck_team.duck_and_dog_score < 0:
                     self.draw_game_over_screen("Hedgehog team wins!", 390, 175)
                     run = False
@@ -79,7 +77,8 @@ class Game:
 
                 self.hedgehog_team.logic(self.apple, self.poison)
 
-                # if the hedgehog team has less than 0 points, then duck team wins and show game over screen for 3 s
+                # if the hedgehog team has less than 0 points,
+                # then duck team wins and show game over screen for 3 s
                 if self.hedgehog_team.hedgehog_and_hamster_score < 0:
                     self.draw_game_over_screen("Duck team wins!", 420, 175)
                     run = False
@@ -88,6 +87,8 @@ class Game:
                 pygame.display.update()
 
     def draw_game_over_screen(self, text, pos_x, pos_y):
+        """Function to draw the game over screen"""
+
         # update game window
         pygame.display.update()
         pygame.time.wait(1000)
@@ -109,34 +110,39 @@ class Game:
         self.window.blit(hedgehog_screen_img, (700, 315))
 
         # show the duck team score
-        self.show_score("Score", 210, 480, self.duck_team.duck_and_dog_score)
+        self.show_score("Score", 210, 480, self.duck_team.duck_and_dog_score, font)
 
         # show the hedgehog team score
         self.show_score(
-            "Score", 715, 480, self.hedgehog_team.hedgehog_and_hamster_score
+            "Score", 715, 480, self.hedgehog_team.hedgehog_and_hamster_score, font
         )
 
         pygame.display.update()
 
-    def show_score(self, text, x_pos, y_pos, score):
-        score_text = self.font.render(f"{text}: {score}", True, (255, 255, 255))
+    def show_score(self, text, x_pos, y_pos, score, font):
+        score_text = font.render(f"{text}: {score}", True, (255, 255, 255))
         self.window.blit(score_text, (x_pos, y_pos))
 
-    def draw_game(self):
+    def draw_game(self, font, frame, background_tile):
+        """Game drawing function"""
+
         # add background color
         self.window.fill((130, 30, 30))
 
         # show white frame and maroon background
-        pygame.draw.rect(self.window, (255, 255, 255), self.frame)
-        pygame.draw.rect(self.window, (130, 30, 30), self.background_tile)
+        pygame.draw.rect(self.window, (255, 255, 255), frame)
+        pygame.draw.rect(self.window, (130, 30, 30), background_tile)
 
         # print score
-        self.show_score("Duck team score", 20, 10, self.duck_team.duck_and_dog_score)
+        self.show_score(
+            "Duck team score", 20, 10, self.duck_team.duck_and_dog_score, font
+        )
         self.show_score(
             "Hedgehog team score",
             720,
             10,
             self.hedgehog_team.hedgehog_and_hamster_score,
+            font,
         )
 
         # print animals images
@@ -145,9 +151,9 @@ class Game:
         self.window.blit(dog_img, (150, 225))
         self.window.blit(hamster_img, (750, 225))
 
-    def show_text(self, text, font, x, y):
+    def show_text(self, text, font, x_pos, y_pos):
         text_on_screen = font.render(text, True, (255, 255, 255))
-        self.window.blit(text_on_screen, (x, y))
+        self.window.blit(text_on_screen, (x_pos, y_pos))
 
     def draw_start_screen(self):
         self.window.fill((130, 30, 30))
@@ -167,6 +173,5 @@ class Game:
         self.window.blit(hedgehog_screen_img, (665, 325))
         self.show_text("press H to catch food", font, 600, 485)
 
-        # pygame.draw.rect(self.window, (130, 30, 30), self.background_tile)
         self.show_text("Press SPACE to start", font, 365, 625)
         pygame.display.update()
